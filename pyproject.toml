@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "event-countdown-updater"
+version = "0.1.0"
+description = "CLI tool that updates a Roblox experience title and icon before an event."
+requires-python = ">=3.11"
+authors = [{ name = "Event Countdown Updater" }]
+readme = "README.md"
+
+[project.scripts]
+event-countdown-updater = "event_countdown_updater.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
