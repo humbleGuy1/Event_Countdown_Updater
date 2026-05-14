@@ -29,6 +29,18 @@ The API key needs access to the target experience. For title updates, enable `un
 
 ## Commands
 
+On Windows you can use the helper script:
+
+```powershell
+.\run.bat
+```
+
+It runs from the project folder, uses `config.toml` by default, asks for status/dry-run/live mode, optional `--now`, and prompts for `ROBLOX_API_KEY` only when live mode is selected. To use another config:
+
+```powershell
+.\run.bat path\to\config.toml
+```
+
 Preview current stage:
 
 ```powershell
