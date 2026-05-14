@@ -1,15 +1,15 @@
-event_time = "2026-05-20 18:00"
+event_time = "2026-05-14 23:00"
 timezone = "Europe/Moscow"
 
-universe_id = "0000000000"
-place_id = ""
+universe_id = "9155218959"
+place_id = "106297767599391"
 language_code = "en"
 
-base_title = "Cut Grass for Brainrots"
+base_title = "Anime Tower"
 title_template = "[{label}] {base_title}"
 
 update_experience_title = true
-update_place_title = false
+update_place_title = true
 update_icon = true
 
 # Safety behavior when the event is farther away than the biggest stage.

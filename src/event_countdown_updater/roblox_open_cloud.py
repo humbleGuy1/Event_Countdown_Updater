@@ -19,9 +19,10 @@ class RobloxOpenCloudClient:
         self.base_url = base_url.rstrip("/")
 
     def update_universe(self, universe_id: str, display_name: str) -> dict:
+        query = urlencode({"updateMask": "displayName"})
         return self._json_request(
             "PATCH",
-            f"/cloud/v2/universes/{universe_id}",
+            f"/cloud/v2/universes/{universe_id}?{query}",
             {"displayName": display_name},
         )
 
@@ -94,4 +95,3 @@ class RobloxOpenCloudClient:
             raise RobloxOpenCloudError(f"Could not reach Roblox API: {error.reason}") from error
         except json.JSONDecodeError as error:
             raise RobloxOpenCloudError("Roblox API returned non-JSON response.") from error
-
