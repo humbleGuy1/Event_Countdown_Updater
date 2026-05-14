@@ -41,6 +41,8 @@ It runs from the project folder, uses `config.toml` by default, asks for status/
 .\run.bat path\to\config.toml
 ```
 
+Use `watch live` in the menu if you want to leave the console open and update each countdown stage as it becomes active.
+
 Preview current stage:
 
 ```powershell
@@ -57,6 +59,12 @@ Actually call Roblox:
 
 ```powershell
 event-countdown-updater --config config.toml apply --live
+```
+
+Keep checking and apply only when the selected stage changes:
+
+```powershell
+event-countdown-updater --config config.toml watch --live --interval 60
 ```
 
 Use a custom time for testing:

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import time
 
 from .config import load_config
 from .countdown import build_plan, format_duration, parse_now
@@ -15,6 +16,20 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         config = load_config(args.config)
+    except Exception as error:
+        print(f"Config error: {error}", file=sys.stderr)
+        return 2
+
+    if args.command == "watch":
+        if args.now:
+            print("--now cannot be used with watch because watch uses real time.", file=sys.stderr)
+            return 2
+        if args.interval < 1:
+            print("--interval must be at least 1 second.", file=sys.stderr)
+            return 2
+        return watch_plan(config, live=args.live, interval=args.interval)
+
+    try:
         now = parse_now(args.now, config) if args.now else None
         plan = build_plan(config, now)
     except Exception as error:
@@ -46,6 +61,19 @@ def build_parser() -> argparse.ArgumentParser:
         "--live",
         action="store_true",
         help="Actually call Roblox. Without this flag the command is a dry-run.",
+    )
+
+    watch_parser = subparsers.add_parser("watch", help="Keep checking and apply when the stage changes.")
+    watch_parser.add_argument(
+        "--live",
+        action="store_true",
+        help="Actually call Roblox. Without this flag changed stages are printed as dry-runs.",
+    )
+    watch_parser.add_argument(
+        "--interval",
+        type=int,
+        default=60,
+        help="Seconds between checks. Default: 60.",
     )
 
     return parser
@@ -108,6 +136,38 @@ def apply_plan(config, plan, live: bool) -> int:
     return 0
 
 
+def watch_plan(config, live: bool, interval: int) -> int:
+    last_signature: tuple[str, str] | None = None
+    mode = "live" if live else "dry-run"
+    print(f"watch: started in {mode} mode; checking every {interval}s. Press Ctrl+C to stop.")
+
+    try:
+        while True:
+            plan = build_plan(config)
+            signature = plan_signature(plan)
+            if signature is None:
+                print_plan(plan)
+                last_signature = None
+            elif signature != last_signature:
+                result = apply_plan(config, plan, live=live)
+                if result == 0:
+                    last_signature = signature
+                else:
+                    print(f"watch: apply failed with exit code {result}; retrying on next check.", file=sys.stderr)
+            else:
+                print(f"watch: unchanged stage {plan.stage.label}; remaining {format_duration(plan.remaining_seconds)}")
+            time.sleep(interval)
+    except KeyboardInterrupt:
+        print()
+        print("watch: stopped.")
+        return 0
+
+
+def plan_signature(plan) -> tuple[str, str] | None:
+    if not plan.should_update:
+        return None
+    return (plan.stage.label, plan.title)
+
+
 if __name__ == "__main__":
     raise SystemExit(main())
-

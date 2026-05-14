@@ -50,6 +50,8 @@ echo Choose action:
 echo   1. status
 echo   2. apply dry-run
 echo   3. apply live
+echo   4. watch dry-run
+echo   5. watch live
 echo.
 
 set "ACTION="
@@ -58,10 +60,16 @@ if "%ACTION%"=="" set "ACTION=1"
 
 set "COMMAND="
 set "LIVE_FLAG="
+set "WATCH_INTERVAL="
 if "%ACTION%"=="1" set "COMMAND=status"
 if "%ACTION%"=="2" set "COMMAND=apply"
 if "%ACTION%"=="3" (
     set "COMMAND=apply"
+    set "LIVE_FLAG=--live"
+)
+if "%ACTION%"=="4" set "COMMAND=watch"
+if "%ACTION%"=="5" (
+    set "COMMAND=watch"
     set "LIVE_FLAG=--live"
 )
 
@@ -72,7 +80,12 @@ if not defined COMMAND (
 
 echo.
 set "NOW="
-set /p NOW=Optional --now override [YYYY-MM-DD HH:MM[:SS], blank = current time]: 
+if /I "%COMMAND%"=="watch" (
+    set /p WATCH_INTERVAL=Check interval in seconds [60]: 
+    if "%WATCH_INTERVAL%"=="" set "WATCH_INTERVAL=60"
+) else (
+    set /p NOW=Optional --now override [YYYY-MM-DD HH:MM[:SS], blank = current time]: 
+)
 
 if defined LIVE_FLAG (
     call :ensure_api_key
@@ -80,7 +93,7 @@ if defined LIVE_FLAG (
 )
 
 echo.
-call :run_tool "%COMMAND%" "%LIVE_FLAG%" "%NOW%"
+call :run_tool "%COMMAND%" "%LIVE_FLAG%" "%NOW%" "%WATCH_INTERVAL%"
 set "EXIT_CODE=%ERRORLEVEL%"
 goto :finish
 
@@ -88,6 +101,16 @@ goto :finish
 set "COMMAND_ARG=%~1"
 set "LIVE_ARG=%~2"
 set "NOW_ARG=%~3"
+set "INTERVAL_ARG=%~4"
+
+if /I "%COMMAND_ARG%"=="watch" (
+    if "%LIVE_ARG%"=="" (
+        %PYTHON_CMD% -m event_countdown_updater --config "%CONFIG%" watch --interval "%INTERVAL_ARG%"
+    ) else (
+        %PYTHON_CMD% -m event_countdown_updater --config "%CONFIG%" watch %LIVE_ARG% --interval "%INTERVAL_ARG%"
+    )
+    exit /b %ERRORLEVEL%
+)
 
 if "%NOW_ARG%"=="" (
     if "%LIVE_ARG%"=="" (
