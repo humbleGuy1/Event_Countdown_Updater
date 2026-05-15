@@ -90,6 +90,8 @@ if /I "%COMMAND%"=="watch" (
 if defined LIVE_FLAG (
     call :ensure_api_key
     if errorlevel 1 goto :finish_error
+    call :ensure_cookie
+    if errorlevel 1 goto :finish_error
 )
 
 echo.
@@ -171,9 +173,23 @@ if defined ROBLOX_API_KEY exit /b 0
 
 echo.
 echo Live mode needs ROBLOX_API_KEY. It will be set only for this window.
-set /p ROBLOX_API_KEY=ROBLOX_API_KEY: 
+set /p ROBLOX_API_KEY=ROBLOX_API_KEY:
 if "%ROBLOX_API_KEY%"=="" (
     echo ROBLOX_API_KEY is empty; live update cannot run.
+    exit /b 1
+)
+exit /b 0
+
+:ensure_cookie
+if defined ROBLOX_COOKIE exit /b 0
+
+echo.
+echo Live mode needs ROBLOX_COOKIE (.ROBLOSECURITY value) for icon upload.
+echo Paste the cookie value only, without the ".ROBLOSECURITY=" prefix.
+echo It will be set only for this window. NEVER share or commit this value.
+set /p ROBLOX_COOKIE=ROBLOX_COOKIE:
+if "%ROBLOX_COOKIE%"=="" (
+    echo ROBLOX_COOKIE is empty; icon upload cannot run.
     exit /b 1
 )
 exit /b 0
