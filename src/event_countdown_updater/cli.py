@@ -7,7 +7,7 @@ import time
 
 from .config import load_config
 from .countdown import build_plan, format_duration, parse_now
-from .roblox_open_cloud import RobloxOpenCloudClient, RobloxOpenCloudError
+from .roblox_open_cloud import RobloxCookieClient, RobloxOpenCloudClient, RobloxOpenCloudError
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -104,30 +104,34 @@ def apply_plan(config, plan, live: bool) -> int:
         return 0
 
     api_key = os.environ.get("ROBLOX_API_KEY", "").strip()
-    if not api_key:
+    cookie = os.environ.get("ROBLOX_COOKIE", "").strip()
+
+    needs_api_key = config.update_experience_title or config.update_place_title
+    needs_cookie = config.update_icon
+
+    if needs_api_key and not api_key:
         print("ROBLOX_API_KEY is not set.", file=sys.stderr)
         return 2
+    if needs_cookie and not cookie:
+        print("ROBLOX_COOKIE is not set (required for icon upload).", file=sys.stderr)
+        return 2
 
-    client = RobloxOpenCloudClient(api_key)
     try:
-        if config.update_experience_title:
-            client.update_universe(config.universe_id, plan.title)
-            print("updated: experience title")
-
-        if config.update_place_title:
-            if not config.place_id:
-                print("update_place_title is true, but place_id is empty.", file=sys.stderr)
-                return 2
-            client.update_place(config.universe_id, config.place_id, plan.title)
-            print("updated: place title")
+        if needs_api_key:
+            cloud = RobloxOpenCloudClient(api_key)
+            if config.update_experience_title:
+                cloud.update_universe(config.universe_id, plan.title)
+                print("updated: experience title")
+            if config.update_place_title:
+                if not config.place_id:
+                    print("update_place_title is true, but place_id is empty.", file=sys.stderr)
+                    return 2
+                cloud.update_place(config.universe_id, config.place_id, plan.title)
+                print("updated: place title")
 
         if config.update_icon:
-            client.update_game_icon(
-                config.universe_id,
-                config.language_code,
-                plan.stage.icon,
-                config.icon_upload_field,
-            )
+            cookie_client = RobloxCookieClient(cookie)
+            cookie_client.upload_game_icon(config.universe_id, plan.stage.icon)
             print("updated: game icon")
     except RobloxOpenCloudError as error:
         print(str(error), file=sys.stderr)

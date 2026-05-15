@@ -13,6 +13,69 @@ class RobloxOpenCloudError(RuntimeError):
     pass
 
 
+class RobloxCookieClient:
+    """Uploads game icons via .ROBLOSECURITY cookie (Open Cloud API doesn't support this)."""
+
+    _AUTH_URL = "https://auth.roblox.com"
+    _PUBLISH_URL = "https://publish.roblox.com"
+
+    def __init__(self, roblosecurity: str) -> None:
+        self._cookie = roblosecurity
+
+    def upload_game_icon(self, universe_id: str, icon_path: Path) -> dict:
+        csrf = self._get_csrf_token()
+        boundary = f"----event-countdown-{uuid.uuid4().hex}"
+        content_type = mimetypes.guess_type(icon_path.name)[0] or "application/octet-stream"
+        file_bytes = icon_path.read_bytes()
+        body = b"".join(
+            [
+                f"--{boundary}\r\n".encode(),
+                f'Content-Disposition: form-data; name="request"; filename="{icon_path.name}"\r\n'.encode(),
+                f"Content-Type: {content_type}\r\n\r\n".encode(),
+                file_bytes,
+                f"\r\n--{boundary}--\r\n".encode(),
+            ]
+        )
+        headers = {
+            "Content-Type": f"multipart/form-data; boundary={boundary}",
+            "Accept": "application/json",
+            "Cookie": f".ROBLOSECURITY={self._cookie}",
+            "X-CSRF-TOKEN": csrf,
+        }
+        url = f"{self._PUBLISH_URL}/v1/games/{universe_id}/icon"
+        request = Request(url, data=body, headers=headers, method="POST")
+        try:
+            with urlopen(request, timeout=30) as response:
+                response_body = response.read()
+                if not response_body:
+                    return {}
+                return json.loads(response_body.decode("utf-8"))
+        except HTTPError as error:
+            body_text = error.read().decode("utf-8", errors="replace")
+            raise RobloxOpenCloudError(f"Roblox API returned {error.code}: {body_text}") from error
+        except URLError as error:
+            raise RobloxOpenCloudError(f"Could not reach Roblox API: {error.reason}") from error
+
+    def _get_csrf_token(self) -> str:
+        url = f"{self._AUTH_URL}/v2/logout"
+        request = Request(
+            url,
+            data=b"",
+            headers={"Cookie": f".ROBLOSECURITY={self._cookie}"},
+            method="POST",
+        )
+        try:
+            urlopen(request, timeout=10)
+        except HTTPError as error:
+            token = error.headers.get("x-csrf-token")
+            if token:
+                return token
+            raise RobloxOpenCloudError(f"Could not get CSRF token: {error.code}") from error
+        except URLError as error:
+            raise RobloxOpenCloudError(f"Could not reach Roblox auth: {error.reason}") from error
+        raise RobloxOpenCloudError("CSRF token not returned by Roblox auth endpoint.")
+
+
 class RobloxOpenCloudClient:
     def __init__(self, api_key: str, base_url: str = "https://apis.roblox.com") -> None:
         self.api_key = api_key
