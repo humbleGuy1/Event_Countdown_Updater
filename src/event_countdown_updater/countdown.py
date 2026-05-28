@@ -6,6 +6,9 @@ from datetime import datetime
 from .config import Config, Stage
 
 
+RESET_STAGE_LABEL = "RESET"
+
+
 @dataclass(frozen=True)
 class CountdownPlan:
     remaining_seconds: int
@@ -25,6 +28,22 @@ def build_plan(config: Config, now: datetime | None = None) -> CountdownPlan:
         current_time = current_time.replace(tzinfo=config.tzinfo)
 
     remaining = int((event_time - current_time).total_seconds())
+
+    if (
+        config.reset_icon is not None
+        and remaining <= -config.reset_after_seconds
+    ):
+        reset_stage = Stage(
+            label=RESET_STAGE_LABEL,
+            max_remaining_seconds=remaining,
+            icon=config.reset_icon,
+        )
+        return CountdownPlan(
+            remaining_seconds=remaining,
+            stage=reset_stage,
+            title=config.reset_title if config.reset_title else config.base_title,
+        )
+
     stage = select_stage(config, remaining)
     if stage is None:
         largest = config.stages[-1].max_remaining_seconds
@@ -69,6 +88,9 @@ def parse_now(text: str, config: Config) -> datetime:
         icon_upload_field=config.icon_upload_field,
         stages=config.stages,
         root=config.root,
+        reset_after_seconds=config.reset_after_seconds,
+        reset_icon=config.reset_icon,
+        reset_title=config.reset_title,
     )
     return parse_event_time(clone)
 

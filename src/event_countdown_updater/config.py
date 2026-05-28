@@ -34,6 +34,9 @@ class Config:
     icon_upload_field: str
     stages: tuple[Stage, ...]
     root: Path
+    reset_after_seconds: int = 3600
+    reset_icon: Path | None = None
+    reset_title: str | None = None
 
     @property
     def tzinfo(self) -> tzinfo:
@@ -69,6 +72,13 @@ def load_config(path: str | Path) -> Config:
 
     place_id = str(raw.get("place_id", "")).strip() or None
 
+    reset_after_raw = str(raw.get("reset_after", "1h")).strip()
+    reset_after_seconds = parse_duration(reset_after_raw) if reset_after_raw else 3600
+    reset_icon_raw = str(raw.get("reset_icon", "assets/default.png")).strip()
+    reset_icon = (root / reset_icon_raw).resolve() if reset_icon_raw else None
+    reset_title_raw = str(raw.get("reset_title", "")).strip()
+    reset_title = reset_title_raw if reset_title_raw else None
+
     return Config(
         event_time=str(raw["event_time"]),
         timezone=str(raw.get("timezone", "Europe/Moscow")),
@@ -84,6 +94,9 @@ def load_config(path: str | Path) -> Config:
         icon_upload_field=str(raw.get("icon_upload_field", "file")).strip() or "file",
         stages=stages,
         root=root,
+        reset_after_seconds=reset_after_seconds,
+        reset_icon=reset_icon,
+        reset_title=reset_title,
     )
 
 

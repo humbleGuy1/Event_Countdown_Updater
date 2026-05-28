@@ -11,7 +11,12 @@ from event_countdown_updater.config import Config, Stage, parse_duration
 from event_countdown_updater.countdown import build_plan
 
 
-def make_config(when_too_early: str = "skip") -> Config:
+def make_config(
+    when_too_early: str = "skip",
+    reset_icon: Path | None = None,
+    reset_after_seconds: int = 3600,
+    reset_title: str | None = None,
+) -> Config:
     return Config(
         event_time="2026-05-20 18:00",
         timezone="Europe/Moscow",
@@ -33,6 +38,9 @@ def make_config(when_too_early: str = "skip") -> Config:
             Stage("12 HOURS", 43200, Path("12h.png")),
         ),
         root=Path("."),
+        reset_after_seconds=reset_after_seconds,
+        reset_icon=reset_icon,
+        reset_title=reset_title,
     )
 
 
@@ -78,6 +86,43 @@ class CountdownTests(unittest.TestCase):
 
         self.assertIsNotNone(plan.stage)
         self.assertEqual(plan.stage.label, "12 HOURS")
+
+    def test_reset_after_event_passes_threshold(self) -> None:
+        config = make_config(reset_icon=Path("default.png"))
+        now = datetime(2026, 5, 20, 19, 1, tzinfo=config.tzinfo)  # 1h1m after event
+
+        plan = build_plan(config, now)
+
+        self.assertIsNotNone(plan.stage)
+        self.assertEqual(plan.stage.label, "RESET")
+        self.assertEqual(plan.stage.icon, Path("default.png"))
+        self.assertEqual(plan.title, "Cut Grass for Brainrots")
+
+    def test_now_stage_still_used_within_reset_window(self) -> None:
+        config = make_config(reset_icon=Path("default.png"))
+        now = datetime(2026, 5, 20, 18, 30, tzinfo=config.tzinfo)  # 30m after event
+
+        plan = build_plan(config, now)
+
+        self.assertIsNotNone(plan.stage)
+        self.assertEqual(plan.stage.label, "NOW!")
+
+    def test_reset_disabled_when_icon_none(self) -> None:
+        config = make_config(reset_icon=None)
+        now = datetime(2026, 5, 20, 23, 0, tzinfo=config.tzinfo)  # 5h after event
+
+        plan = build_plan(config, now)
+
+        self.assertIsNotNone(plan.stage)
+        self.assertEqual(plan.stage.label, "NOW!")
+
+    def test_reset_title_override(self) -> None:
+        config = make_config(reset_icon=Path("default.png"), reset_title="Custom Title")
+        now = datetime(2026, 5, 20, 19, 1, tzinfo=config.tzinfo)
+
+        plan = build_plan(config, now)
+
+        self.assertEqual(plan.title, "Custom Title")
 
 
 if __name__ == "__main__":
