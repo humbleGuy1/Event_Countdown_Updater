@@ -1,15 +1,15 @@
-event_time = "2026-06-24 22:00"
+event_time = "2026-08-07 21:00"
 timezone = "Europe/Moscow"
 
-universe_id = "9757776682"
-place_id = "97365843755210"
+universe_id = "10410945205"
+place_id = "90086669327265"
 language_code = "en"
 # "single" updates only language_code.
 # "all_game_locales" updates the configured language, the source language,
 # all supported languages, and any locales that already have icon overrides.
 icon_language_mode = "all_game_locales"
 
-base_title = "Cut Grass for Brainrots"
+base_title = "+1 Cut Grass Adventure"
 title_template = "[{label}] {base_title}"
 
 update_experience_title = true
@@ -27,46 +27,46 @@ icon_upload_field = "file"
 # After the event passes, wait this long, then swap back to the default
 # icon and base_title (no [LABEL] prefix). Set reset_icon = "" to disable.
 reset_after = "1h"
-reset_icon = "assets/cut_grass/default.png"
+reset_icon = "assets/cut_grass_adventure/default.png"
 # Optional: override the title used during reset. Empty = use base_title.
 reset_title = ""
 
 [[stages]]
 label = "NOW!"
 max_remaining = "0s"
-icon = "assets/cut_grass/now_icon.png"
+icon = "assets/cut_grass_adventure/now_icon.png"
 
 [[stages]]
 label = "15MIN"
 max_remaining = "15m"
-icon = "assets/cut_grass/15m_icon.png"
+icon = "assets/cut_grass_adventure/15m_icon.png"
 
 [[stages]]
 label = "30MIN"
 max_remaining = "30m"
-icon = "assets/cut_grass/30m_icon.png"
+icon = "assets/cut_grass_adventure/30m_icon.png"
 
 [[stages]]
 label = "1H"
 max_remaining = "1h"
-icon = "assets/cut_grass/1h_icon.png"
+icon = "assets/cut_grass_adventure/1h_icon.png"
 
 [[stages]]
 label = "2H"
 max_remaining = "2h"
-icon = "assets/cut_grass/2h_icon.png"
+icon = "assets/cut_grass_adventure/2h_icon.png"
 
 [[stages]]
 label = "3H"
 max_remaining = "3h"
-icon = "assets/cut_grass/3h_icon.png"
+icon = "assets/cut_grass_adventure/3h_icon.png"
 
 [[stages]]
 label = "6H"
 max_remaining = "6h"
-icon = "assets/cut_grass/6h_icon.png"
+icon = "assets/cut_grass_adventure/6h_icon.png"
 
 [[stages]]
 label = "12H"
 max_remaining = "12h"
-icon = "assets/cut_grass/12h_icon.png"
+icon = "assets/cut_grass_adventure/12h_icon.png"

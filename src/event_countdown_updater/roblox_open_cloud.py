@@ -18,6 +18,16 @@ class RobloxCookieClient:
 
     _AUTH_URL = "https://auth.roblox.com"
     _PUBLISH_URL = "https://publish.roblox.com"
+    # Required: without a browser-like User-Agent, Cloudflare rejects the request
+    # with "403 / error code: 1010" before it ever reaches Roblox.
+    _BROWSER_HEADERS = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        ),
+        "Referer": "https://create.roblox.com/",
+        "Origin": "https://create.roblox.com",
+    }
 
     def __init__(self, roblosecurity: str) -> None:
         self._cookie = roblosecurity
@@ -37,6 +47,7 @@ class RobloxCookieClient:
             ]
         )
         headers = {
+            **self._BROWSER_HEADERS,
             "Content-Type": f"multipart/form-data; boundary={boundary}",
             "Accept": "application/json",
             "Cookie": f".ROBLOSECURITY={self._cookie}",
@@ -61,7 +72,10 @@ class RobloxCookieClient:
         request = Request(
             url,
             data=b"",
-            headers={"Cookie": f".ROBLOSECURITY={self._cookie}"},
+            headers={
+                **self._BROWSER_HEADERS,
+                "Cookie": f".ROBLOSECURITY={self._cookie}",
+            },
             method="POST",
         )
         try:

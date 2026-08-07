@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import os
+from pathlib import Path
 import sys
 import time
 
@@ -89,6 +90,22 @@ def print_plan(plan) -> None:
     print(f"icon: {plan.stage.icon}")
 
 
+def _read_cookie() -> str:
+    """Read the .ROBLOSECURITY value, preferring a file over the environment.
+
+    cmd.exe's `set /p` silently truncates input at 1023 characters, which mangles
+    real Roblox cookies, so a file is the reliable path.
+    """
+    cookie_file = os.environ.get("ROBLOX_COOKIE_FILE", "").strip()
+    if cookie_file:
+        # utf-8-sig: Notepad saves UTF-8 with a BOM, and str.strip() does not remove it.
+        cookie = Path(cookie_file).read_text(encoding="utf-8-sig").strip()
+        if cookie.startswith(".ROBLOSECURITY="):
+            cookie = cookie[len(".ROBLOSECURITY=") :]
+        return cookie
+    return os.environ.get("ROBLOX_COOKIE", "").strip()
+
+
 def apply_plan(config, plan, live: bool) -> int:
     print_plan(plan)
     if not plan.should_update:
@@ -104,7 +121,11 @@ def apply_plan(config, plan, live: bool) -> int:
         return 0
 
     api_key = os.environ.get("ROBLOX_API_KEY", "").strip()
-    cookie = os.environ.get("ROBLOX_COOKIE", "").strip()
+    try:
+        cookie = _read_cookie()
+    except OSError as error:
+        print(f"Could not read ROBLOX_COOKIE_FILE: {error}", file=sys.stderr)
+        return 2
 
     needs_api_key = config.update_experience_title or config.update_place_title
     needs_cookie = config.update_icon
@@ -113,8 +134,18 @@ def apply_plan(config, plan, live: bool) -> int:
         print("ROBLOX_API_KEY is not set.", file=sys.stderr)
         return 2
     if needs_cookie and not cookie:
-        print("ROBLOX_COOKIE is not set (required for icon upload).", file=sys.stderr)
+        print(
+            "No cookie found (required for icon upload). Set ROBLOX_COOKIE_FILE to a "
+            "file holding the .ROBLOSECURITY value, or set ROBLOX_COOKIE.",
+            file=sys.stderr,
+        )
         return 2
+    if needs_cookie and len(cookie) == 1023:
+        print(
+            "Warning: cookie is exactly 1023 chars, which is the cmd.exe 'set /p' input "
+            "limit - it is probably truncated. Use ROBLOX_COOKIE_FILE instead.",
+            file=sys.stderr,
+        )
 
     try:
         if needs_api_key:

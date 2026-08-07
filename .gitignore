@@ -8,4 +8,6 @@ __pycache__/
 build/
 dist/
 config.toml
+.roblox_cookie
+.roblox_cookie.txt
 

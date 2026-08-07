@@ -181,18 +181,30 @@ if "%ROBLOX_API_KEY%"=="" (
 exit /b 0
 
 :ensure_cookie
+if defined ROBLOX_COOKIE_FILE exit /b 0
 if defined ROBLOX_COOKIE exit /b 0
 
-echo.
-echo Live mode needs ROBLOX_COOKIE (.ROBLOSECURITY value) for icon upload.
-echo Paste the cookie value only, without the ".ROBLOSECURITY=" prefix.
-echo It will be set only for this window. NEVER share or commit this value.
-set /p ROBLOX_COOKIE=ROBLOX_COOKIE:
-if "%ROBLOX_COOKIE%"=="" (
-    echo ROBLOX_COOKIE is empty; icon upload cannot run.
-    exit /b 1
+rem NOTE: the cookie is NOT read with "set /p" on purpose - cmd.exe truncates
+rem that input at 1023 characters, and real .ROBLOSECURITY values are longer.
+if exist "%ROOT%.roblox_cookie" (
+    set "ROBLOX_COOKIE_FILE=%ROOT%.roblox_cookie"
+    echo Using cookie file: %ROOT%.roblox_cookie
+    exit /b 0
 )
-exit /b 0
+rem Notepad silently appends .txt, so accept that name too.
+if exist "%ROOT%.roblox_cookie.txt" (
+    set "ROBLOX_COOKIE_FILE=%ROOT%.roblox_cookie.txt"
+    echo Using cookie file: %ROOT%.roblox_cookie.txt
+    exit /b 0
+)
+
+echo.
+echo Live mode needs the .ROBLOSECURITY cookie for icon upload.
+echo Save the cookie value into this file, on a single line:
+echo     %ROOT%.roblox_cookie
+echo Paste the value only, without the ".ROBLOSECURITY=" prefix.
+echo NEVER share or commit that file.
+exit /b 1
 
 :usage
 echo Usage:
